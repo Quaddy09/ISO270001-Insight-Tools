@@ -1,0 +1,23 @@
+# If you're getting "Import 'pandas' could not be resolved from source",
+# it means your environment doesn't have `pandas` installed or your VSCode Python interpreter is not correctly set.
+
+# ✅ First: Install required libraries
+# Open your terminal in VSCode (or PowerShell in your project directory), then run:
+
+pip install pandas openpyxl streamlit
+
+# ✅ Second: Ensure VSCode is using the correct Python interpreter
+# In VSCode:
+# 1. Press Ctrl+Shift+P (or F1)
+# 2. Search for: "Python: Select Interpreter"
+# 3. Choose the one that shows your current environment (where `pandas` is installed)
+
+# ✅ Third: Create a `requirements.txt` file to manage dependencies
+# In your project folder, create a new file named `requirements.txt` and add:
+
+streamlit
+pandas
+openpyxl
+
+# Then later you (or your teammates) can set up the environment with:
+# pip install -r requirements.txt
