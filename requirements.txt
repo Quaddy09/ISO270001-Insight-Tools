@@ -4,8 +4,6 @@
 # ✅ First: Install required libraries
 # Open your terminal in VSCode (or PowerShell in your project directory), then run:
 
-pip install pandas openpyxl streamlit
-
 # ✅ Second: Ensure VSCode is using the correct Python interpreter
 # In VSCode:
 # 1. Press Ctrl+Shift+P (or F1)
