@@ -9,7 +9,7 @@
 
 import streamlit as st
 import pandas as pd
-from utils.recommender import generate_recommendations
+from utils.ai_assistant import generate_recommendations
 import os
 
 st.set_page_config(page_title="ISO 27001 Insight Tool", layout="wide")

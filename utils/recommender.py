@@ -1,38 +1,20 @@
-import pandas as pd
-
-def generate_recommendations(df: pd.DataFrame) -> pd.DataFrame:
+def generate_recommendations(df):
     recommendations = []
+    for _, row in df.iterrows():
+        control = str(row.get("Control", "Unknown"))
+        status = str(row.get("Status", "")).lower()
 
-    for index, row in df.iterrows():
-        control = str(row.get("Control", "")).strip()
-        status = str(row.get("Implementation Status", "")).strip().lower()
-
-        if not control or not status:
-            continue
-
-        if status in ["not implemented", "no"]:
-            recommendations.append({
-                "Control": control,
-                "Status": status.title(),
-                "Recommendation": f"Implement control: {control}"
-            })
-        elif status in ["partial", "in progress"]:
-            recommendations.append({
-                "Control": control,
-                "Status": status.title(),
-                "Recommendation": f"Complete full implementation for control: {control}"
-            })
-        elif status in ["implemented", "yes"]:
-            recommendations.append({
-                "Control": control,
-                "Status": status.title(),
-                "Recommendation": "No action needed"
-            })
+        if status in ["not implemented", "partial"]:
+            action = "Review control and implement missing requirements"
+        elif status in ["implemented", "complete"]:
+            action = "Ensure control is periodically reviewed"
         else:
-            recommendations.append({
-                "Control": control,
-                "Status": status.title(),
-                "Recommendation": "Unknown status — please review manually"
-            })
+            action = "Status unclear - verify manually"
 
-    return pd.DataFrame(recommendations)
+        recommendations.append({
+            "Control": control,
+            "Current Status": row.get("Status", ""),
+            "Recommended Action": action
+        })
+
+    return recommendations

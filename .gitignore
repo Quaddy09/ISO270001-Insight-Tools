@@ -1,8 +1,22 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+
+# Virtual environment
 venv/
+
+# Environment variables
 .env
-.DS_Store
+
+# VSCode files
+.vscode/
+
+# Streamlit cache
+.streamlit/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Excel uploads
 *.xlsx
