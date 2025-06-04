@@ -1,21 +1,38 @@
-def generate_recommendations(df):
+import pandas as pd
+
+def generate_recommendations(df: pd.DataFrame) -> pd.DataFrame:
     recommendations = []
 
-    for _, row in df.iterrows():
-        status = str(row.get('Status', '')).strip().lower()
-        control = str(row.get('Control', '')).strip()
+    for index, row in df.iterrows():
+        control = str(row.get("Control", "")).strip()
+        status = str(row.get("Implementation Status", "")).strip().lower()
 
-        if status in ['not implemented', 'tidak diterapkan']:
+        if not control or not status:
+            continue
+
+        if status in ["not implemented", "no"]:
             recommendations.append({
-                'Control': control,
-                'Status': row['Status'],
-                'Next Step': 'Segera implementasikan kontrol ini sesuai panduan ISO/IEC 27001.'
+                "Control": control,
+                "Status": status.title(),
+                "Recommendation": f"Implement control: {control}"
             })
-        elif status in ['partial', 'sebagian']:
+        elif status in ["partial", "in progress"]:
             recommendations.append({
-                'Control': control,
-                'Status': row['Status'],
-                'Next Step': 'Lengkapi implementasi kontrol ini dan dokumentasikan buktinya.'
+                "Control": control,
+                "Status": status.title(),
+                "Recommendation": f"Complete full implementation for control: {control}"
+            })
+        elif status in ["implemented", "yes"]:
+            recommendations.append({
+                "Control": control,
+                "Status": status.title(),
+                "Recommendation": "No action needed"
+            })
+        else:
+            recommendations.append({
+                "Control": control,
+                "Status": status.title(),
+                "Recommendation": "Unknown status — please review manually"
             })
 
-    return recommendations if recommendations else [{"Message": "Semua kontrol sudah diterapkan sepenuhnya."}]
+    return pd.DataFrame(recommendations)
