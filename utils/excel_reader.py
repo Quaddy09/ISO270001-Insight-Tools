@@ -29,13 +29,12 @@ def fuzzy_find_status_column(columns):
 
 def read_selected_sheet(file_path, sheet_name):
     """
-    Read a specific sheet from an Excel file and attempt to identify the status column.
-    Returns the DataFrame and the detected status column name (or None).
+    Read a specific sheet from an Excel file regardless of 'status' column.
+    Returns the DataFrame.
     """
     try:
         df = pd.read_excel(file_path, sheet_name=sheet_name)
-        status_col = fuzzy_find_status_column(df.columns.tolist())
-        return df, status_col
+        return df
     except Exception as e:
         raise RuntimeError(f"Failed to read sheet '{sheet_name}': {e}")
 
