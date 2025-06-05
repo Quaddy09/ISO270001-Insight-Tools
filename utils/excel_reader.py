@@ -1,6 +1,6 @@
-import pandas as pd
+import pandas as pd # type: ignore
 import difflib
-from fuzzywuzzy import process
+from fuzzywuzzy import process # type: ignore
 
 def read_excel_sheets(file_path):
     """Return a list of sheet names from an Excel file."""
