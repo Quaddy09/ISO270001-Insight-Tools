@@ -1,40 +1,39 @@
 import pandas as pd
+import difflib
 
-def read_gap_assessment(file):
-    xls = pd.ExcelFile(file)
-    print("Sheets found:", xls.sheet_names)
+def read_excel_sheets(file_path):
+    """Return a list of sheet names from an Excel file."""
+    try:
+        xls = pd.ExcelFile(file_path)
+        return xls.sheet_names
+    except Exception as e:
+        raise RuntimeError(f"Failed to read Excel sheets: {e}")
 
-    for sheet_name in xls.sheet_names:
-        df = xls.parse(sheet_name, header=None)
-        print(f"Checking sheet: {sheet_name}")
+def fuzzy_find_status_column(columns):
+    """
+    Attempt to find the most likely 'status' column using fuzzy matching.
+    Returns the column name if found, else None.
+    """
+    possible_names = [
+        "status", "implementation", "current status",
+        "existing control", "gap", "state", "progress"
+    ]
+    columns_lower = [col.lower() for col in columns]
+    for name in possible_names:
+        match = difflib.get_close_matches(name.lower(), columns_lower, n=1, cutoff=0.7)
+        if match:
+            idx = columns_lower.index(match[0])
+            return columns[idx]
+    return None
 
-        for i in range(min(20, len(df))):
-            row = df.iloc[i].fillna('').astype(str).str.lower()
-            if any("control" in cell for cell in row) and any("status" in cell for cell in row):
-                print(f"Found header at row {i} in sheet '{sheet_name}'")
-
-                header_row = i
-                df.columns = df.iloc[header_row]
-                df = df[header_row + 1:].reset_index(drop=True)
-
-                col_map = {}
-                for col in df.columns:
-                    col_str = str(col).lower()
-                    if "control" in col_str:
-                        col_map[col] = "Control"
-                    elif "status" in col_str:
-                        col_map[col] = "Status"
-                    elif "recommend" in col_str or "catatan" in col_str:
-                        col_map[col] = "Recommendation"
-
-                df.rename(columns=col_map, inplace=True)
-
-                if 'Control' in df.columns and 'Status' in df.columns:
-                    selected_cols = ['Control', 'Status']
-                    if 'Recommendation' in df.columns:
-                        selected_cols.append('Recommendation')
-                    df_cleaned = df[selected_cols].dropna(subset=['Control', 'Status'])
-                    return df_cleaned
-
-    print("⚠️ Could not find the expected format in any sheet.")
-    return pd.DataFrame()
+def read_selected_sheet(file_path, sheet_name):
+    """
+    Read a specific sheet from an Excel file and attempt to identify the status column.
+    Returns the DataFrame and the detected status column name (or None).
+    """
+    try:
+        df = pd.read_excel(file_path, sheet_name=sheet_name)
+        status_col = fuzzy_find_status_column(df.columns.tolist())
+        return df, status_col
+    except Exception as e:
+        raise RuntimeError(f"Failed to read sheet '{sheet_name}': {e}")

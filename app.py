@@ -1,58 +1,52 @@
 import streamlit as st
-import pandas as pd
-import difflib
-import os
-from utils.recommender import generate_recommendations
-from utils.ai_assistant import summarize_findings, generate_ai_recommendation
+from utils.excel_reader import read_excel_sheets, read_selected_sheet
+from utils.recommender import generate_gap_summary, list_missing_controls
+from utils.ai_assistant import generate_recommendations
 
-st.set_page_config(page_title="ISO 27001 Gap Assessment Analyzer", layout="wide")
-st.title("🔍 ISO 27001 Gap Assessment Analyzer")
+st.set_page_config(page_title="ISO 27001 Gap Assessment Analyzer")
+st.title("\U0001F50D ISO 27001 Gap Assessment Analyzer")
 
-st.markdown("**Upload your Gap Assessment Excel File**")
-uploaded_file = st.file_uploader("", type=["xlsx"], label_visibility="collapsed")
+def main():
+    uploaded_file = st.file_uploader("Upload your Gap Assessment Excel File", type=["xlsx"])
+    if not uploaded_file:
+        st.info("Please upload an Excel file to begin.")
+        return
 
-if uploaded_file:
     try:
-        xls = pd.ExcelFile(uploaded_file)
-        sheet_names = xls.sheet_names
-        st.success(f"Sheets found: {sheet_names}")
-
-        # Auto-detect sheets with a likely 'status' column
-        def sheet_has_similar_column(sheet_df, target="status"):
-            return any(difflib.get_close_matches(target.lower(), [str(c).lower() for c in sheet_df.columns], cutoff=0.6))
-
-        matching_sheets = [sheet for sheet in sheet_names if sheet_has_similar_column(pd.read_excel(xls, sheet_name=sheet))]
-
-        selected_sheet = None
-        if matching_sheets:
-            selected_sheet = matching_sheets[0]
-            st.success(f"Automatically selected sheet: {selected_sheet}")
-        else:
-            selected_sheet = st.selectbox("Select a sheet to analyze:", sheet_names)
-
-        df = pd.read_excel(xls, sheet_name=selected_sheet)
-
-        # Fuzzy match to find 'status' column
-        expected_column = 'status'
-        column_matches = difflib.get_close_matches(expected_column.lower(), [str(col).lower() for col in df.columns], cutoff=0.6)
-
-        if not column_matches:
-            st.error("❌ Could not find a column similar to 'status'. Please check your sheet.")
-        else:
-            status_col = column_matches[0]
-            st.success(f"Matched column for 'status': {status_col}")
-
-            # Filter or process as needed based on status
-            if df[status_col].isnull().all():
-                st.warning("The 'status' column appears to be empty.")
-            else:
-                recommendations = generate_recommendations(df, status_col)
-                st.subheader("📋 Summary of Findings")
-                st.write(summarize_findings(recommendations))
-
-                if st.checkbox("💡 Generate AI-based Recommendations"):
-                    ai_summary = generate_ai_recommendation(recommendations)
-                    st.success(ai_summary)
-
+        sheets = read_excel_sheets(uploaded_file)
+        st.success(f"Sheets found: {sheets}")
     except Exception as e:
-        st.error(f"❌ Failed to process file: {e}")
+        st.error(f"Error reading sheets: {e}")
+        return
+
+    sheet_name = st.selectbox("Select a sheet to analyze", sheets)
+    try:
+        df, status_col = read_selected_sheet(uploaded_file, sheet_name)
+    except Exception as e:
+        st.error(f"Error reading sheet: {e}")
+        return
+
+    if not status_col:
+        st.error("❌ Could not find a sheet with an expected 'status' column.")
+        return
+
+    st.success(f"✅ Found status column: {status_col}")
+
+    st.subheader("Gap Summary")
+    summary = generate_gap_summary(df, status_col)
+    st.write(summary)
+
+    st.subheader("Missing Controls")
+    missing_df = list_missing_controls(df, status_col)
+    st.dataframe(missing_df)
+
+    st.subheader("AI Recommendations")
+    try:
+        recommendations = generate_recommendations(missing_df)
+        for rec in recommendations:
+            st.markdown(f"- {rec}")
+    except Exception as e:
+        st.error(f"Error generating recommendations: {e}")
+
+if __name__ == "__main__":
+    main()
